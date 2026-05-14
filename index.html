@@ -84,7 +84,11 @@
       z-index: 1100;
       width: min(390px, calc(100vw - 24px));
       max-height: min(72svh, 680px);
-      overflow: auto;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      touch-action: pan-y;
       background: rgba(15,23,42,.97);
       border: 1px solid #334155;
       border-radius: 14px;
@@ -179,7 +183,11 @@
     }
     #subject-options {
       max-height: 260px;
-      overflow: auto;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      touch-action: pan-y;
       padding-right: 2px;
     }
     .map-actions {
@@ -279,10 +287,16 @@
         top: 50px;
         left: 10px;
         right: 10px;
+        bottom: calc(10px + env(safe-area-inset-bottom));
         width: auto;
-        max-height: 74svh;
+        max-height: none;
+        overflow-y: auto;
       }
       #date-options.check-grid { grid-template-columns: 1fr; }
+      #subject-options {
+        max-height: none;
+        overflow: visible;
+      }
       #stats-bar { gap: 8px 12px; font-size: .7rem; }
       #status-panel {
         left: 10px;
@@ -915,6 +929,23 @@ function toggleFilters(open = null) {
   toggle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
   toggle.textContent = shouldOpen ? '− Filter' : '+ Filter';
 }
+
+function stopMapTouchCapture() {
+  const panel = document.getElementById('filter-panel');
+  const toggle = document.getElementById('filter-toggle');
+  const scrollAreas = [panel, toggle, document.getElementById('subject-options')].filter(Boolean);
+
+  scrollAreas.forEach(el => {
+    L.DomEvent.disableClickPropagation(el);
+    L.DomEvent.disableScrollPropagation(el);
+  });
+
+  ['touchstart', 'touchmove', 'pointerdown', 'pointermove', 'wheel'].forEach(type => {
+    panel.addEventListener(type, event => event.stopPropagation(), { passive: true });
+  });
+}
+
+stopMapTouchCapture();
 
 document.getElementById('filter-toggle').addEventListener('click', () => toggleFilters());
 document.getElementById('filter-close').addEventListener('click', () => toggleFilters(false));
