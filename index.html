@@ -264,6 +264,68 @@
     .source-manual { color: #fbbf24; }
     .source-missing { color: #fb7185; }
 
+    .security-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f8fafc;
+      border: 2px solid #0f172a;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, .32);
+      font-size: 16px;
+      line-height: 1;
+    }
+    .security-icon.camera { color: #9a3412; border-color: #f97316; background: #fff7ed; }
+    .security-icon.drone { color: #1d4ed8; border-color: #2563eb; background: #eff6ff; }
+    .security-icon.police { color: #1e3a8a; border-color: #1d4ed8; background: #dbeafe; }
+    .security-icon.hospital { color: #991b1b; border-color: #dc2626; background: #fee2e2; }
+    .security-icon.ferry { color: #155e75; border-color: #0891b2; background: #cffafe; }
+    .security-icon svg {
+      width: 22px;
+      height: 22px;
+      display: block;
+    }
+    .security-area-label {
+      background: rgba(37, 99, 235, .92);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,.9);
+      border-radius: 999px;
+      box-shadow: 0 3px 12px rgba(15,23,42,.28);
+      padding: 5px 8px;
+      font-size: .7rem;
+      font-weight: 900;
+      letter-spacing: .04em;
+      white-space: nowrap;
+    }
+    .security-popup-title {
+      color: #f8fafc;
+      font-size: .96rem;
+      font-weight: 900;
+      margin-bottom: 5px;
+    }
+    .security-popup-meta {
+      color: #cbd5e1;
+      font-size: .78rem;
+      line-height: 1.45;
+      margin-top: 3px;
+    }
+    .legend-symbol {
+      display:inline-flex;
+      width:18px;
+      height:18px;
+      align-items:center;
+      justify-content:center;
+      margin-right:5px;
+      vertical-align:-4px;
+      border-radius:999px;
+      background:#f8fafc;
+      color:#0f172a;
+      font-size:.76rem;
+      border:1px solid #475569;
+    }
+
     @media (max-width: 640px) {
       header {
         padding: 8px 10px;
@@ -354,11 +416,26 @@
       </div>
     </div>
 
+
+    <div class="filter-group">
+      <div class="filter-title">Säkerhetslager</div>
+      <div id="security-options" class="check-grid">
+        <label class="check-row"><input type="checkbox" class="security-layer-check" value="camera" checked><span>📷 Kamerabevakning på utpekade gator</span></label>
+        <label class="check-row"><input type="checkbox" class="security-layer-check" value="drone" checked><span>Drönarbevakning, Visby med omnejd</span></label>
+        <label class="check-row"><input type="checkbox" class="security-layer-check" value="service" checked><span>👮 Polis · 🏥 Sjukhus · ⛴️ Färjeläge</span></label>
+      </div>
+    </div>
+
     <div class="filter-group">
       <div class="filter-title">Teckenförklaring</div>
       <div class="legend-line"><span class="dot" style="background:#22c55e"></span>Officiell markplats</div>
       <div class="legend-line"><span class="dot" style="background:#3b82f6"></span>Adressgeokodad</div>
       <div class="legend-line"><span class="dot" style="background:#f59e0b"></span>Fast plats/namn</div>
+      <div class="legend-line"><span class="legend-symbol">📷</span>Kamerabevakning/gatubeslut</div>
+      <div class="legend-line"><span class="legend-symbol">▱</span>Drönarbevakningsområde</div>
+      <div class="legend-line"><span class="legend-symbol">👮</span>Polisstation</div>
+      <div class="legend-line"><span class="legend-symbol">🏥</span>Sjukhus</div>
+      <div class="legend-line"><span class="legend-symbol">⛴️</span>Färjeläge</div>
     </div>
   </div>
 
@@ -879,6 +956,207 @@ let currentFiltered = [];
 let allDates = [];
 let allSubjects = [];
 
+// ---------------------------------------------------------------------------
+// Samhällsviktiga punkter och polisens bevakningsbeslut
+// ---------------------------------------------------------------------------
+const SECURITY_SOURCES = {
+  iris: 'https://polisen.se/aktuellt/nyheter/stockholm/2026/april/polisen.se-aktuellt-nyheter-stockholm-2026-april-kamerabevakning-delar-av-visby/',
+  artilleri: 'https://polisen.se/aktuellt/nyheter/stockholm/2026/maj/kamerabevakning-i-delar-av-visby/',
+  drone: 'https://polisen.se/aktuellt/nyheter/stockholm/2026/maj/kamerabevakning-med-dronare-visby/',
+  police: 'https://polisen.se/om-polisen/kontakt/polisstationer/gotland/visby/',
+  hospital: 'https://www.1177.se/hitta-vard/kontaktkort/Visby-lasarett-Gotland/',
+  ferry: 'https://www.destinationgotland.se/allt-om-resan/farjeterminaler/visby/'
+};
+
+const SECURITY_POINTS = [
+  {
+    layer: 'camera', icon: 'camera', title: 'Kamerabevakning – Irisdalsgatan',
+    place: 'Irisdalsgatan, Visby', lat: 57.639664861033985, lon: 18.31596377601506,
+    period: '30 april–28 juli 2026, dygnet runt',
+    note: 'Gatubeslut där Polisen kan kamerabevaka med bland annat drönare. Punkten är placerad som ungefärlig gatupunkt.',
+    sourceLabel: 'Polismyndigheten, beslut 30 april 2026', url: SECURITY_SOURCES.iris, radius: 180
+  },
+  {
+    layer: 'camera', icon: 'camera', title: 'Kamerabevakning – Tjelvarvägen',
+    place: 'Tjelvarvägen, Visby', lat: 57.6392, lon: 18.3126,
+    period: '30 april–28 juli 2026, dygnet runt',
+    note: 'Gatubeslut där Polisen kan kamerabevaka med bland annat drönare. Punkten är placerad som ungefärlig gatupunkt.',
+    sourceLabel: 'Polismyndigheten, beslut 30 april 2026', url: SECURITY_SOURCES.iris, radius: 180
+  },
+  {
+    layer: 'camera', icon: 'camera', title: 'Kamerabevakning – Mästergatan',
+    place: 'Mästergatan, Visby', lat: 57.6421942, lon: 18.3149137,
+    period: '30 april–28 juli 2026, dygnet runt',
+    note: 'Gatubeslut där Polisen kan kamerabevaka med bland annat drönare. Punkten är placerad som ungefärlig gatupunkt.',
+    sourceLabel: 'Polismyndigheten, beslut 30 april 2026', url: SECURITY_SOURCES.iris, radius: 180
+  },
+  {
+    layer: 'camera', icon: 'camera', title: 'Kamerabevakning – Artillerigatan',
+    place: 'Artillerigatan, Visby', lat: 57.6318, lon: 18.3015,
+    period: '7 maj–4 augusti 2026, dygnet runt',
+    note: 'Gatubeslut där Polisen kan använda drönare vid kamerabevakning. Punkten är placerad som ungefärlig gatupunkt.',
+    sourceLabel: 'Polismyndigheten, beslut 7 maj 2026', url: SECURITY_SOURCES.artilleri, radius: 220
+  },
+  {
+    layer: 'camera', icon: 'camera', title: 'Kamerabevakning – Fältgatan',
+    place: 'Fältgatan, Visby', lat: 57.6290825500698, lon: 18.3001793497993,
+    period: '7 maj–4 augusti 2026, dygnet runt',
+    note: 'Gatubeslut där Polisen kan använda drönare vid kamerabevakning. Punkten är placerad som ungefärlig gatupunkt.',
+    sourceLabel: 'Polismyndigheten, beslut 7 maj 2026', url: SECURITY_SOURCES.artilleri, radius: 180
+  },
+  {
+    layer: 'camera', icon: 'camera', title: 'Kamerabevakning – Lännavägen',
+    place: 'Lännavägen, Visby', lat: 57.6280647500217, lon: 18.3002320000014,
+    period: '7 maj–4 augusti 2026, dygnet runt',
+    note: 'Gatubeslut där Polisen kan använda drönare vid kamerabevakning. Punkten är placerad som ungefärlig gatupunkt.',
+    sourceLabel: 'Polismyndigheten, beslut 7 maj 2026', url: SECURITY_SOURCES.artilleri, radius: 180
+  },
+  {
+    layer: 'camera', icon: 'camera', title: 'Kamerabevakning – Östra Hansegatan',
+    place: 'Östra Hansegatan, Visby', lat: 57.6340387750723, lon: 18.3004410501562,
+    period: '7 maj–4 augusti 2026, dygnet runt',
+    note: 'Gatubeslut där Polisen kan använda drönare vid kamerabevakning. Punkten är placerad som ungefärlig gatupunkt.',
+    sourceLabel: 'Polismyndigheten, beslut 7 maj 2026', url: SECURITY_SOURCES.artilleri, radius: 220
+  },
+  {
+    layer: 'service', icon: 'police', title: 'Polisstation Visby',
+    place: 'Norra Hansegatan 2 B, Visby', lat: 57.63735, lon: 18.305441,
+    note: 'Polisstation i Visby.', sourceLabel: 'Polismyndigheten', url: SECURITY_SOURCES.police
+  },
+  {
+    layer: 'service', icon: 'hospital', title: 'Visby lasarett',
+    place: 'S:t Göransgatan 5, Visby', lat: 57.64804277608465, lon: 18.300676480702794,
+    note: 'Akutsjukhus.', sourceLabel: '1177/Region Gotland', url: SECURITY_SOURCES.hospital
+  },
+  {
+    layer: 'service', icon: 'ferry', title: 'Visby hamnterminal',
+    place: 'Färjeleden 14, Visby', lat: 57.634419, lon: 18.279963,
+    note: 'Destination Gotlands färjeterminal.', sourceLabel: 'Destination Gotland', url: SECURITY_SOURCES.ferry
+  }
+];
+
+const SECURITY_AREAS = [
+  {
+    layer: 'drone', icon: 'drone', title: 'Drönarbevakning – Visby stad med omnejd',
+    place: 'Visby stad och omkringliggande tätbebyggelse',
+    period: '11 maj–30 september 2026',
+    note: 'Ungefärlig yta utifrån Polisens beskrivning: Flotiljvägen/Visby flygplats i norr, Österby/Rävhagen/Terra Nova i öster, Visborgsområdet/väg 562 samt Vibble, Västerhejde, Fridhem och Högklint i söder. Exakt gräns framgår av Polisens kartbild.',
+    sourceLabel: 'Polismyndigheten, publicerad 14 maj 2026', url: SECURITY_SOURCES.drone,
+    label: [57.622, 18.287],
+    coords: [
+      [57.669, 18.320], [57.666, 18.355], [57.641, 18.356], [57.624, 18.349],
+      [57.611, 18.330], [57.594, 18.305], [57.575, 18.260], [57.571, 18.213],
+      [57.586, 18.203], [57.606, 18.232], [57.622, 18.255], [57.635, 18.274],
+      [57.650, 18.282], [57.665, 18.300]
+    ]
+  }
+];
+
+const securityLayers = {
+  camera: L.layerGroup().addTo(map),
+  drone: L.layerGroup().addTo(map),
+  service: L.layerGroup().addTo(map)
+};
+
+const droneSvg = `<svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M24 32h16" />
+    <path d="M32 24v16" />
+    <path d="M20 28l-8-8" />
+    <path d="M44 28l8-8" />
+    <path d="M20 36l-8 8" />
+    <path d="M44 36l8 8" />
+    <circle cx="10" cy="18" r="6" />
+    <circle cx="54" cy="18" r="6" />
+    <circle cx="10" cy="46" r="6" />
+    <circle cx="54" cy="46" r="6" />
+    <rect x="24" y="26" width="16" height="12" rx="3" fill="currentColor" stroke="none" />
+  </g>
+</svg>`;
+
+function securitySymbol(icon) {
+  if (icon === 'camera') return '📷';
+  if (icon === 'drone') return droneSvg;
+  if (icon === 'police') return '👮';
+  if (icon === 'hospital') return '🏥';
+  if (icon === 'ferry') return '⛴️';
+  return '●';
+}
+
+function makeSecurityIcon(icon) {
+  return L.divIcon({
+    className: '',
+    html: `<div class="security-icon ${esc(icon)}">${securitySymbol(icon)}</div>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+    popupAnchor: [0, -16]
+  });
+}
+
+function securityPopup(item) {
+  const period = item.period ? `<div class="security-popup-meta">🗓 ${esc(item.period)}</div>` : '';
+  const place = item.place ? `<div class="security-popup-meta">📍 ${esc(item.place)}</div>` : '';
+  const note = item.note ? `<div class="security-popup-meta">${esc(item.note)}</div>` : '';
+  const src = item.url ? `<div class="security-popup-meta"><a href="${esc(item.url)}" target="_blank" rel="noopener">${esc(item.sourceLabel || 'Källa')}</a></div>` : '';
+  return `<div>
+    <div class="security-popup-title">${esc(item.title)}</div>
+    ${place}${period}${note}${src}
+  </div>`;
+}
+
+function renderSecurityLayers() {
+  Object.values(securityLayers).forEach(layer => layer.clearLayers());
+
+  for (const item of SECURITY_POINTS) {
+    if (item.radius) {
+      L.circle([item.lat, item.lon], {
+        radius: item.radius,
+        color: '#f97316',
+        weight: 2,
+        opacity: .85,
+        fillColor: '#fed7aa',
+        fillOpacity: .18,
+        dashArray: '5 5'
+      }).bindPopup(securityPopup(item), { maxWidth: 360 }).addTo(securityLayers[item.layer]);
+    }
+    L.marker([item.lat, item.lon], { icon: makeSecurityIcon(item.icon), keyboard: true, title: item.title })
+      .bindPopup(securityPopup(item), { maxWidth: 360 })
+      .addTo(securityLayers[item.layer]);
+  }
+
+  for (const area of SECURITY_AREAS) {
+    L.polygon(area.coords, {
+      color: '#2563eb',
+      weight: 2,
+      opacity: .9,
+      fillColor: '#60a5fa',
+      fillOpacity: .10,
+      dashArray: '8 6'
+    }).bindPopup(securityPopup(area), { maxWidth: 380 }).addTo(securityLayers[area.layer]);
+
+    L.marker(area.label, {
+      icon: L.divIcon({
+        className: '',
+        html: `<div class="security-area-label">DRÖNARE</div>`,
+        iconSize: [90, 24],
+        iconAnchor: [45, 12]
+      }),
+      interactive: true,
+      title: area.title
+    }).bindPopup(securityPopup(area), { maxWidth: 380 }).addTo(securityLayers[area.layer]);
+  }
+}
+
+function updateSecurityLayerVisibility() {
+  document.querySelectorAll('.security-layer-check').forEach(cb => {
+    const layer = securityLayers[cb.value];
+    if (!layer) return;
+    if (cb.checked && !map.hasLayer(layer)) layer.addTo(map);
+    if (!cb.checked && map.hasLayer(layer)) map.removeLayer(layer);
+  });
+}
+
+
 function sourceColor(source) {
   if (source === 'officiell markkarta') return '#22c55e';
   if (source === 'adressgeokodad') return '#3b82f6';
@@ -1029,6 +1307,7 @@ document.getElementById('filter-close').addEventListener('click', () => toggleFi
 document.getElementById('filter-search').addEventListener('input', applyFilters);
 document.getElementById('date-options').addEventListener('change', applyFilters);
 document.getElementById('subject-options').addEventListener('change', applyFilters);
+document.getElementById('security-options').addEventListener('change', updateSecurityLayerVisibility);
 document.querySelectorAll('[data-select]').forEach(btn => {
   btn.addEventListener('click', () => {
     const action = btn.getAttribute('data-select');
@@ -1048,6 +1327,8 @@ document.getElementById('refresh-coords').addEventListener('click', async () => 
 });
 
 (async function init() {
+  renderSecurityLayers();
+  updateSecurityLayerVisibility();
   populateFilters();
   document.getElementById('event-count').textContent = `${EVENTS.length} evenemang`;
   document.getElementById('refresh-coords').disabled = true;
